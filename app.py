@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from itertools import combinations
 import io
+import openpyxl
 
 def multi_parent_matching(
     parents_dict,  # e.g., {'p1': (1000.0, pd.Timestamp('2024-01-01')), ...}
@@ -82,13 +83,16 @@ st.title("Cash Reconciliation Matcher")
 st.write("Upload your Excel file and configure the matching parameters below.")
 
 # File upload
-uploaded_file = st.file_uploader("Choose an Excel file", type=['xlsx', 'xls'])
+uploaded_file = st.file_uploader("Choose a file", type=['xlsx', 'xls', 'csv'])
 
 if uploaded_file is not None:
     # Show loading spinner while reading file
     with st.spinner("Reading and processing file..."):
-        # Read the Excel file
-        df = pd.read_excel(uploaded_file)
+        # Read the file based on its type
+        if uploaded_file.name.endswith('.csv'):
+            df = pd.read_csv(uploaded_file)
+        else:
+            df = pd.read_excel(uploaded_file)
         
         # Column mapping section
         st.header("Column Mapping")
@@ -341,16 +345,6 @@ if uploaded_file is not None:
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # CSV download
-                    csv = results_df.to_csv(index=True)
-                    st.download_button(
-                        label="Download Results as CSV",
-                        data=csv,
-                        file_name="matching_results.csv",
-                        mime="text/csv"
-                    )
-                
-                with col2:
                     # Excel download
                     excel_buffer = io.BytesIO()
                     with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
@@ -361,4 +355,14 @@ if uploaded_file is not None:
                         data=excel_data,
                         file_name="matching_results.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                
+                with col2:
+                    # CSV download
+                    csv = results_df.to_csv(index=True)
+                    st.download_button(
+                        label="Download Results as CSV",
+                        data=csv,
+                        file_name="matching_results.csv",
+                        mime="text/csv"
                     ) 
